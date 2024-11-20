@@ -7,6 +7,8 @@ WORKDIR ~/
 
 COPY ./requirements.txt .
 
+RUN pip install schedule
+
 RUN pip install -r requirements.txt
 
 COPY . .

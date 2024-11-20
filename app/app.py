@@ -42,7 +42,7 @@ def start_scheduler():
 # Function to handle scheduling
 def schedule_task():
     schedule.clear()
-    schedule.every().day.at("00:45").do(update_all_balances)
+    schedule.every().day.at("01:17").do(update_all_balances)
 
     for job in schedule.jobs:
         logging.info(f"Scheduled job: {job}")
