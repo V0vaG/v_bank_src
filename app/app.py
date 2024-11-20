@@ -13,7 +13,7 @@ alias = "topix"
 HOME_DIR = os.path.expanduser("~")
 FILES_PATH = os.path.join(HOME_DIR, "script_files", alias)
 DATA_DIR = os.path.join(FILES_PATH, "data")
-USERS_FILE = os.path.join(DATA_DIR, 'users.json')
+USERS_FILE = os.path.join(FILES_PATH, 'users.json')
 
 # Ensure directories exist
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -81,6 +81,9 @@ def show_login():
     no_users_exist = len(users) == 0
     return render_template('login.html', no_users_exist=no_users_exist)
 
+
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if os.path.exists(USERS_FILE):
@@ -93,10 +96,18 @@ def register():
         username = request.form.get('username')
         password = request.form.get('password')
         name = request.form.get('name')
-        balance = float(request.form.get('balance', 0))
-        weekly_pay = float(request.form.get('weekly_pay', 0))
-        overdraft = float(request.form.get('overdraft', 0))
-        interest = float(request.form.get('interest', 0))
+        
+        # Use a default value of 0.0 if the form field is empty or invalid
+        try:
+            balance = float(request.form.get('balance', 0) or 0.0)
+            weekly_pay = float(request.form.get('weekly_pay', 0) or 0.0)
+            overdraft = float(request.form.get('overdraft', 0) or 0.0)
+            interest = float(request.form.get('interest', 0) or 0.0)
+        except ValueError:
+            flash("Please enter valid numeric values for balance and other fields.", "danger")
+            return redirect(url_for('register'))
+
+        # Automatically set role to 'admin' for the first user
         role = 'admin' if len(users) == 0 else request.form.get('role', 'user')
 
         if any(user['username'] == username for user in users):
@@ -123,6 +134,9 @@ def register():
         return redirect(url_for('show_login'))
 
     return render_template('register.html')
+
+
+
 
 @app.route('/login', methods=['POST'])
 def login():
