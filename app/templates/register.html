@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+    <h1>Register</h1>
+    <form method="POST" action="{{ url_for('register') }}">
+        <label>Username:</label>
+        <input type="text" name="username" required>
+        <label>Password:</label>
+        <input type="password" name="password" required>
+        <label>Name:</label>
+        <input type="text" name="name" required>
+        <label>Balance:</label>
+        <input type="number" name="balance" step="0.01" required>
+        <label>Weekly Pay:</label>
+        <input type="number" name="weekly_pay" step="0.01" required>
+        <label>Overdraft:</label>
+        <input type="number" name="overdraft" step="0.01">
+        <label>Interest:</label>
+        <input type="number" name="interest" step="0.01">
+        <button type="submit">Register</button>
+    </form>
+</body>
+</html>
