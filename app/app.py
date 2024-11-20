@@ -9,6 +9,7 @@ import schedule
 from datetime import datetime
 import logging
 
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
