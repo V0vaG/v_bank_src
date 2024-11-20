@@ -3,6 +3,14 @@ import os
 import json
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+import threading
+import time
+import schedule
+from datetime import datetime
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
 # Configuration
 app = Flask(__name__)
@@ -15,11 +23,33 @@ FILES_PATH = os.path.join(HOME_DIR, "script_files", alias)
 DATA_DIR = os.path.join(FILES_PATH, "data")
 USERS_FILE = os.path.join(FILES_PATH, 'users.json')
 
+# Scheduler flag (persistent)
+scheduler_started = False
+
 # Ensure directories exist
 os.makedirs(DATA_DIR, exist_ok=True)
 if not os.path.exists(USERS_FILE):
     with open(USERS_FILE, 'w') as f:
         json.dump([], f)
+
+def start_scheduler():
+    global scheduler_started
+    if not scheduler_started and os.getenv('WERKZEUG_RUN_MAIN') == 'true':
+        scheduler_started = True
+        scheduler_thread = threading.Thread(target=schedule_task, daemon=True)
+        scheduler_thread.start()
+
+# Function to handle scheduling
+def schedule_task():
+    schedule.clear()
+    schedule.every().day.at("00:45").do(update_all_balances)
+
+    for job in schedule.jobs:
+        logging.info(f"Scheduled job: {job}")
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
@@ -40,7 +70,6 @@ def login_required(f):
 @app.route('/update_balance/<username>', methods=['POST'])
 @login_required
 def update_balance(username):
-    # Ensure the logged-in user is an admin
     active_user = session.get('active_user')
 
     with open(USERS_FILE, 'r') as f:
@@ -51,13 +80,11 @@ def update_balance(username):
         flash("You do not have permission to perform this action.", "danger")
         return redirect(url_for('admin_area'))
 
-    # Find the user to update
     user_to_update = next((u for u in users if u['username'] == username), None)
     if not user_to_update:
         flash("User not found.", "danger")
         return redirect(url_for('admin_area'))
 
-    # Update the user's balance
     try:
         amount = float(request.form.get('amount', 0))
         user_to_update['balance'] += amount
@@ -81,9 +108,6 @@ def show_login():
     no_users_exist = len(users) == 0
     return render_template('login.html', no_users_exist=no_users_exist)
 
-
-
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if os.path.exists(USERS_FILE):
@@ -96,8 +120,7 @@ def register():
         username = request.form.get('username')
         password = request.form.get('password')
         name = request.form.get('name')
-        
-        # Use a default value of 0.0 if the form field is empty or invalid
+
         try:
             balance = float(request.form.get('balance', 0) or 0.0)
             weekly_pay = float(request.form.get('weekly_pay', 0) or 0.0)
@@ -107,7 +130,6 @@ def register():
             flash("Please enter valid numeric values for balance and other fields.", "danger")
             return redirect(url_for('register'))
 
-        # Automatically set role to 'admin' for the first user
         role = 'admin' if len(users) == 0 else request.form.get('role', 'user')
 
         if any(user['username'] == username for user in users):
@@ -135,9 +157,6 @@ def register():
 
     return render_template('register.html')
 
-
-
-
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form.get('username')
@@ -153,13 +172,12 @@ def login():
     if user and check_password_hash(user['password'], password):
         session['active_user'] = username
         
-        # Redirect based on user role
         if user['kind'] == 'admin':
             flash("Login successful! Welcome, Admin.", "success")
             return redirect(url_for('admin_area'))
         
         flash("Login successful!", "success")
-        return redirect(url_for('user_info'))  # Redirect users to their info page
+        return redirect(url_for('user_info'))
 
     flash("Invalid username or password.", "danger")
     return redirect(url_for('show_login'))
@@ -167,20 +185,16 @@ def login():
 @app.route('/user', methods=['GET'])
 @login_required
 def user_info():
-    # Get the logged-in username
     username = session.get('active_user')
 
-    # Load users from the JSON file
     with open(USERS_FILE, 'r') as f:
         users = json.load(f)
 
-    # Find the logged-in user's data
     user = next((u for u in users if u['username'] == username), None)
     if not user:
         flash("User not found.", "danger")
         return redirect(url_for('show_login'))
 
-    # Render the user info page
     return render_template('user_info.html', user=user)
 
 @app.route('/admin', methods=['GET'])
@@ -189,7 +203,8 @@ def admin_area():
     with open(USERS_FILE, 'r') as f:
         users = json.load(f)
 
-    return render_template('admin.html', user_data=users)
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return render_template('admin.html', user_data=users, current_time=current_time)
 
 @app.route('/edit_user/<username>', methods=['GET', 'POST'])
 @login_required
@@ -218,5 +233,22 @@ def edit_user(username):
 
     return render_template('edit_user.html', user=user_to_edit)
 
+def update_all_balances():
+    with open(USERS_FILE, 'r') as f:
+        users = json.load(f)
+
+    for user in users:
+        if 'balance' in user and 'interest' in user:
+            user['balance'] += user['balance'] * (user['interest'] / 100)
+            logging.info(f"Updated user: {user['username']} with new balance: {user['balance']}")
+        else:
+            logging.warning(f"Skipping user {user.get('username', 'unknown')} due to missing 'balance' or 'interest' key.")
+
+    with open(USERS_FILE, 'w') as f:
+        json.dump(users, f, indent=4)
+
+    logging.info("Balances updated by interest.")
+
 if __name__ == '__main__':
+    start_scheduler()
     app.run(debug=True)
