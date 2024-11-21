@@ -7,6 +7,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import socket
 from functools import wraps
 from funcs import *
+from datetime import datetime
+
 
 # Configuration
 app = Flask(__name__)
@@ -158,22 +160,55 @@ def login_required(f):
         return f(*args, **kwargs)
     return wrap
 
-@app.route('/index')
+@app.route('/index', methods=['GET', 'POST'])
 @login_required
 def home():
-    # Load the user information from the session
+    # Load the logged-in user's information
     username = session.get('active_user')
-    
-    # Load users to find the current user's role
+
+    # Load users data
     with open(USERS_FILE, 'r') as f:
         users = json.load(f)
-    
-    # Check if the current user is an admin
-    user = next((u for u in users if u['username'] == username), None)
-    is_admin = user and user['kind'] == 'admin'
 
-    # Render the home page with the admin flag
-    return render_template('index.html', version=version, host=host, is_admin=is_admin, user=username)
+    # Find the current user
+    user = next((u for u in users if u['username'] == username), None)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('show_login'))
+
+    # Handle "Get Money" form submission
+    if request.method == 'POST':
+        try:
+            amount = int(request.form.get('amount', 0))
+            if amount <= 0:
+                flash("Enter a positive amount.", "danger")
+            elif user['balance'] < amount:
+                flash("Insufficient balance.", "danger")
+            else:
+                user['balance'] -= amount
+                # Save updated users data
+                with open(USERS_FILE, 'w') as f:
+                    json.dump(users, f, indent=4)
+                flash(f"${amount} withdrawn successfully!", "success")
+        except ValueError:
+            flash("Invalid amount entered.", "danger")
+
+    # Determine if the current user is an admin
+    is_admin = user['kind'] == 'admin'
+
+    # Pass the current year to the template
+    current_year = datetime.now().year
+
+    return render_template(
+        'index.html',
+        version=version,
+        host=host,
+        is_admin=is_admin,
+        user=user,
+        current_year=current_year
+    )
+
+
 
 
 @app.route('/admin', methods=['GET', 'POST'])
