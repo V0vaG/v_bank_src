@@ -175,6 +175,7 @@ def home():
     # Render the home page with the admin flag
     return render_template('index.html', version=version, host=host, is_admin=is_admin, user=username)
 
+
 @app.route('/admin', methods=['GET', 'POST'])
 @login_required
 def admin_area():
@@ -196,27 +197,56 @@ def admin_area():
 
         allow_registration = config.get('allow_registration', False)
 
-        # Count topics created by each user
-        user_topics_count = {user['username']: 0 for user in users}
-
-        for folder in os.listdir(DATA_DIR):
-            folder_path = os.path.join(DATA_DIR, folder)
-            if os.path.isdir(folder_path):
-                json_file = os.path.join(folder_path, f"{folder}.json")
-                if os.path.exists(json_file):
-                    with open(json_file, 'r') as f:
-                        topic_data = json.load(f)[0]
-                        editor = topic_data.get('editor')
-                        if editor in user_topics_count:
-                            user_topics_count[editor] += 1
-
-        # Create a list of user data with the topic counts
-        user_data = [(user, user_topics_count.get(user['username'], 0)) for user in users]
-
-        return render_template('admin.html', allow_registration=allow_registration, user_data=user_data)
+        # Pass the users' data to the template
+        return render_template('admin.html', allow_registration=allow_registration, user_data=users)
     
     flash("You do not have access to the admin area.", "danger")
     return redirect(url_for('home'))
+
+@app.route('/edit_user/<username>', methods=['GET', 'POST'])
+@login_required
+def edit_user(username):
+    # Ensure the logged-in user is an admin
+    active_username = session.get('active_user')
+    with open(USERS_FILE, 'r') as f:
+        users = json.load(f)
+
+    active_user = next((u for u in users if u['username'] == active_username), None)
+    if not active_user or active_user['kind'] != 'admin':
+        flash("You do not have permission to perform this action.", "danger")
+        return redirect(url_for('home'))
+
+    # Find the user to edit
+    user = next((u for u in users if u['username'] == username), None)
+    if not user:
+        flash(f"User '{username}' not found.", "danger")
+        return redirect(url_for('admin_area'))
+
+    if request.method == 'POST':
+        # Update user details
+        user['name'] = request.form.get('name')
+        user['username'] = request.form.get('username')
+        user['birthday'] = request.form.get('birthday')
+        user['balance'] = int(request.form.get('balance', 0))
+        user['sellery'] = int(request.form.get('sellery', 0))
+        user['interest'] = int(request.form.get('interest', 0))
+        user['overdraft'] = int(request.form.get('overdraft', 0))
+        user['kind'] = request.form.get('role')  # Update role
+
+        # Handle password change
+        new_password = request.form.get('password')
+        if new_password:
+            user['password'] = generate_password_hash(new_password)
+
+        # Save updated users list
+        with open(USERS_FILE, 'w') as f:
+            json.dump(users, f, indent=4)
+
+        flash(f"User '{username}' updated successfully.", "success")
+        return redirect(url_for('admin_area'))
+
+    return render_template('edit_user.html', user=user)
+
 
 @app.route('/delete_user/<username>', methods=['POST'])
 @login_required

@@ -8,38 +8,22 @@
         body {
             font-family: Arial, sans-serif;
             background-color: #f0f4f8;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
+            padding: 20px;
         }
 
-        h1 {
-            font-size: 2.5rem;
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            font-size: 2rem;
-            color: #333;
-            margin-bottom: 10px;
+        h1, h2 {
+            text-align: center;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-
-        table, th, td {
-            border: 1px solid #ddd;
+            margin: 20px auto;
         }
 
         th, td {
-            padding: 12px;
+            border: 1px solid #ddd;
+            padding: 8px;
             text-align: left;
         }
 
@@ -47,171 +31,83 @@
             background-color: #f2f2f2;
         }
 
-        button, .button {
-            text-decoration: none;
-            color: white;
+        .button {
+            padding: 10px 20px;
             background-color: #4CAF50;
-            padding: 12px 25px;
-            border-radius: 30px;
-            font-size: 1.1rem;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            color: white;
             border: none;
+            border-radius: 5px;
+            text-decoration: none;
             cursor: pointer;
-            display: inline-block;
+            margin: 5px;
         }
 
-        button:hover, .button:hover {
+        .button:hover {
             background-color: #45a049;
-            transform: translateY(-2px);
         }
 
-        .button-container {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        /* Notification Popup styles */
-        .popup {
-            position: fixed;
-            bottom: -100px;
-            right: 20px;
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            opacity: 0;
-            transition: all 0.5s ease-in-out;
-            z-index: 1000;
-        }
-
-        .popup.show {
-            bottom: 20px;
-            opacity: 1;
-        }
-
-        .popup.error {
+        .delete-button {
             background-color: #f44336;
         }
 
-        .close-btn {
-            background-color: transparent;
-            color: white;
-            border: none;
-            font-size: 16px;
-            margin-left: 15px;
-            cursor: pointer;
+        .delete-button:hover {
+            background-color: #d32f2f;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
         }
     </style>
-    <script>
-        // Function to show the popup notification
-        function showPopup(message, isError = false) {
-            const popup = document.getElementById('notificationPopup');
-            const popupMessage = document.getElementById('popupMessage');
-            popupMessage.innerText = message;
-            
-            // If error, add the error class
-            if (isError) {
-                popup.classList.add('error');
-            } else {
-                popup.classList.remove('error');
-            }
-
-            // Show the popup
-            popup.classList.add('show');
-
-            // Automatically hide the popup after 3 seconds
-            setTimeout(() => {
-                popup.classList.remove('show');
-            }, 3000);
-        }
-
-        // Function to handle settings and show the popup
-        function saveSettingsAndGoHome(event) {
-            event.preventDefault(); // Prevent default form submission
-
-            // Submit the form via JavaScript
-            const form = document.getElementById('settingsForm');
-            const formData = new FormData(form);
-
-            fetch(form.action, {
-                method: 'POST',
-                body: formData
-            }).then(response => {
-                if (response.ok) {
-                    // Show success popup
-                    showPopup('Settings saved successfully!');
-                    setTimeout(() => {
-                        window.location.href = "{{ url_for('home') }}"; // Redirect to home after 3 seconds
-                    }, 3000);
-                } else {
-                    // Show error popup
-                    showPopup('Failed to save settings.', true);
-                }
-            });
-        }
-
-        // Close the popup when clicking on the close button
-        function closePopup() {
-            document.getElementById('notificationPopup').classList.remove('show');
-        }
-    </script>
 </head>
 <body>
     <h1>Admin Area</h1>
-    <p>Welcome, admin!</p>
-
-    <h2>User List and Topics Created</h2>
-<table>
-    <thead>
-        <tr>
-            <th>Username</th>
-            <th>Role</th>
-            <th>Number of Topics Created</th>
-            <th>Actions</th> <!-- New column for actions -->
-        </tr>
-    </thead>
-    <tbody>
-        {% for user, topic_count in user_data %}
-        <tr>
-            <td>{{ user.username }}</td>
-            <td>{{ user.kind }}</td>
-            <td>{{ topic_count }}</td>
-            <td>
-                <!-- Add delete button for each user -->
-                <form action="{{ url_for('delete_user', username=user.username) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete user {{ user.username }}?');">
-                    <button type="submit" class="button delete-button">Delete User</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-
     <div class="button-container">
-        <!-- Button to add user -->
+        <!-- Add User Button -->
         <a href="{{ url_for('register', admin_area=True) }}" class="button">Add User</a>
+
+        <!-- Logout Button -->
+        <a href="{{ url_for('logout') }}" class="button delete-button">Logout</a>
     </div>
 
-    <!-- Combined form for saving settings and going back home -->
-    <form id="settingsForm" action="{{ url_for('toggle_registration') }}" method="POST">
-        <label for="allow_registration">Allow External User Registration</label>
-        <input type="checkbox" id="allow_registration" name="allow_registration" 
-               {% if allow_registration %}checked{% endif %}>
-
-        <div class="button-container">
-            <!-- Button to save settings and go back to home -->
-            <button type="submit" onclick="saveSettingsAndGoHome(event)">Save Settings and Go Back to Home</button>
-        </div>
-    </form>
-
-    <!-- Popup notification -->
-    <div id="notificationPopup" class="popup">
-        <span id="popupMessage"></span>
-        <button class="close-btn" onclick="closePopup()">✖</button>
-    </div>
+    <h2>User List</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Birthday</th>
+                <th>Balance</th>
+                <th>Sellery</th>
+                <th>Interest</th>
+                <th>Overdraft</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in user_data %}
+            <tr>
+                <td>{{ user.get('name', 'N/A') }}</td>
+                <td>{{ user.get('username', 'N/A') }}</td>
+                <td>{{ user.get('birthday', 'N/A') }}</td>
+                <td>{{ user.get('balance', '0') }}</td>
+                <td>{{ user.get('sellery', '0') }}</td>
+                <td>{{ user.get('interest', '0') }}</td>
+                <td>{{ user.get('overdraft', '0') }}</td>
+                <td>{{ user.get('kind', 'N/A') }}</td> <!-- Role column -->
+                <td>
+                    <!-- Edit User Button -->
+                    <a href="{{ url_for('edit_user', username=user['username']) }}" class="button">Edit</a>
+                    
+                    <!-- Delete User Button -->
+                    <form action="{{ url_for('delete_user', username=user['username']) }}" method="POST" style="display:inline;">
+                        <button class="button delete-button" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>
