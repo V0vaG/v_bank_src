@@ -21,10 +21,6 @@ HOME_DIR = os.path.expanduser("~")
 FILES_PATH = os.path.join(HOME_DIR, "script_files", alias)
 DATA_DIR = os.path.join(FILES_PATH, "data")
 USERS_FILE = os.path.join(DATA_DIR, 'users.json')
-scheduler = "22:49"
-
-# Scheduler flag (persistent)
-scheduler_started = False
 
 # Ensure directories exist
 os.makedirs(DATA_DIR, exist_ok=True)
