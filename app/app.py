@@ -1,18 +1,19 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import os
 import json
-from werkzeug.security import generate_password_hash, check_password_hash
-from functools import wraps
 import threading
 import time
-import schedule
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+
 from datetime import datetime
 import logging
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
-# Configuration
+# Flask app configuration
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
@@ -21,7 +22,8 @@ alias = "topix"
 HOME_DIR = os.path.expanduser("~")
 FILES_PATH = os.path.join(HOME_DIR, "script_files", alias)
 DATA_DIR = os.path.join(FILES_PATH, "data")
-USERS_FILE = os.path.join(FILES_PATH, 'users.json')
+USERS_FILE = os.path.join(DATA_DIR, 'users.json')
+scheduler = "22:49"
 
 # Scheduler flag (persistent)
 scheduler_started = False
@@ -32,24 +34,6 @@ if not os.path.exists(USERS_FILE):
     with open(USERS_FILE, 'w') as f:
         json.dump([], f)
 
-def start_scheduler():
-    global scheduler_started
-    if not scheduler_started and os.getenv('WERKZEUG_RUN_MAIN') == 'true':
-        scheduler_started = True
-        scheduler_thread = threading.Thread(target=schedule_task, daemon=True)
-        scheduler_thread.start()
-
-# Function to handle scheduling
-def schedule_task():
-    schedule.clear()
-    schedule.every().day.at("01:17").do(update_all_balances)
-
-    for job in schedule.jobs:
-        logging.info(f"Scheduled job: {job}")
-
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
@@ -120,16 +104,10 @@ def register():
         username = request.form.get('username')
         password = request.form.get('password')
         name = request.form.get('name')
-
-        try:
-            balance = float(request.form.get('balance', 0) or 0.0)
-            weekly_pay = float(request.form.get('weekly_pay', 0) or 0.0)
-            overdraft = float(request.form.get('overdraft', 0) or 0.0)
-            interest = float(request.form.get('interest', 0) or 0.0)
-        except ValueError:
-            flash("Please enter valid numeric values for balance and other fields.", "danger")
-            return redirect(url_for('register'))
-
+        balance = float(request.form.get('balance', 0))
+        weekly_pay = float(request.form.get('weekly_pay', 0))
+        overdraft = float(request.form.get('overdraft', 0))
+        interest = float(request.form.get('interest', 0))
         role = 'admin' if len(users) == 0 else request.form.get('role', 'user')
 
         if any(user['username'] == username for user in users):
@@ -233,6 +211,7 @@ def edit_user(username):
 
     return render_template('edit_user.html', user=user_to_edit)
 
+# Function to update all balances by interest
 def update_all_balances():
     with open(USERS_FILE, 'r') as f:
         users = json.load(f)
@@ -250,5 +229,4 @@ def update_all_balances():
     logging.info("Balances updated by interest.")
 
 if __name__ == '__main__':
-    start_scheduler()
     app.run(debug=True)

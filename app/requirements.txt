@@ -21,7 +21,6 @@ MarkupSafe==2.1.5
 matplotlib==3.9.2
 mouse==0.7.1
 MouseInfo==0.1.3
-numpy==2.1.1
 packaging==24.1
 pillow==10.4.0
 psutil==6.0.0
@@ -45,6 +44,7 @@ schedule==1.2.2
 setuptools==74.0.0
 six==1.16.0
 soupsieve==2.5
-urllib3==2.2.2
+urllib3>=1.25.4,<1.27
 Werkzeug==3.0.3
 wikipedia==1.4.0
+gunicorn
