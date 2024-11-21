@@ -27,6 +27,7 @@ if not os.path.exists(USERS_FILE):
     with open(USERS_FILE, 'w') as f:
         json.dump([], f)
 
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     users_file = os.path.join(DATA_DIR, 'users.json')
@@ -41,13 +42,7 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        groups = request.form.get('groups').split(',')
-
-        # If there are no users, make the first user an admin
-        if len(users) == 0:
-            role = 'admin'
-        else:
-            role = request.form.get('role') if 'role' in request.form else 'user'
+        role = request.form.get('role') if 'role' in request.form else 'user'
 
         # Check if username already exists
         if any(user['username'] == username for user in users):
@@ -57,15 +52,33 @@ def register():
         # Hash the password before saving it
         hashed_password = generate_password_hash(password)
 
-        # Create new user object
+        # Create a new user object
         new_user = {
             'username': username,
             'password': hashed_password,
-            'kind': role,  # Use the selected or auto-assigned role (user/admin)
-            'groups': groups
+            'kind': role  # 'admin' or 'user'
         }
 
-        # Save new user
+        # If the role is 'user', include additional fields
+        if role == 'user':
+            name = request.form.get('name')
+            birthday = request.form.get('birthday')  # New field
+            balance = request.form.get('balance', 0)  # Default to 0
+            sellery = request.form.get('sellery', 0)  # Default to 0
+            interest = request.form.get('interest', 0)  # Default to 0
+            overdraft = request.form.get('overdraft', 0)  # Default to 0
+
+            # Add additional fields to the user object
+            new_user.update({
+                'name': name,
+                'birthday': birthday,
+                'balance': int(balance),
+                'sellery': int(sellery),
+                'interest': int(interest),
+                'overdraft': int(overdraft)
+            })
+
+        # Save the new user to the list
         users.append(new_user)
         with open(users_file, 'w') as f:
             json.dump(users, f, indent=4)
@@ -76,7 +89,7 @@ def register():
     # Check if accessed from admin area or login page
     show_role_selection = 'admin_area' in request.args  # Flag for role dropdown
     back_url = url_for('admin_area') if 'admin_area' in request.args else url_for('show_login')  # Determine where to go back to
-    
+
     return render_template('register.html', show_role_selection=show_role_selection, back_url=back_url)
 
 
