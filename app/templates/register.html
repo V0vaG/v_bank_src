@@ -8,7 +8,7 @@
         /* General reset and layout */
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f0f4f8;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -17,47 +17,56 @@
             margin: 0;
         }
 
-        /* Container styling */
         .container {
             background-color: white;
-            padding: 30px 50px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            padding: 40px 50px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
             text-align: center;
             max-width: 400px;
+            width: 100%;
         }
 
-        /* Heading style */
         h1 {
-            font-size: 2rem;
+            font-size: 2.5rem;
             color: #333;
             margin-bottom: 30px;
         }
 
-        /* Form styling */
         form {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        input[type="text"], input[type="password"], select {
+        input[type="text"], 
+        input[type="password"], 
+        input[type="date"], 
+        input[type="number"], 
+        select {
             width: 100%;
-            padding: 12px;
+            padding: 15px;
             margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
             box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.3s;
         }
 
-        /* Button styling */
+        input:focus, 
+        select:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
         .button {
-            padding: 12px 25px;
+            padding: 15px 30px;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 30px;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -75,15 +84,14 @@
             transform: translateY(0);
         }
 
-        /* Back Button styling */
         .back-button {
             margin-top: 15px;
-            padding: 12px 25px;
+            padding: 15px 30px;
             background-color: #f44336;
             color: white;
             border: none;
             border-radius: 30px;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -101,76 +109,33 @@
             transform: translateY(0);
         }
 
-        /* Notification Popup styles */
-        .popup {
-            position: fixed;
-            bottom: -100px;
-            right: 20px;
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            opacity: 0;
-            transition: all 0.5s ease-in-out;
-            z-index: 1000;
+        .extra-fields {
+            display: none;
+            width: 100%;
+            margin-top: 20px;
+            animation: fadeIn 0.3s ease-in-out;
         }
 
-        .popup.show {
-            bottom: 20px;
-            opacity: 1;
-        }
-
-        .popup.error {
-            background-color: #f44336;
-        }
-
-        .close-btn {
-            background-color: transparent;
-            color: white;
-            border: none;
-            font-size: 16px;
-            margin-left: 15px;
-            cursor: pointer;
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
     <script>
-        // Function to show the popup notification
-        function showPopup(message, isError = false) {
-            const popup = document.getElementById('notificationPopup');
-            const popupMessage = document.getElementById('popupMessage');
-            popupMessage.innerText = message;
-            
-            // If error, add the error class
-            if (isError) {
-                popup.classList.add('error');
+        function toggleFields() {
+            const role = document.getElementById('role').value;
+            const extraFields = document.getElementById('extra-fields');
+            if (role === 'user') {
+                extraFields.style.display = 'block';
             } else {
-                popup.classList.remove('error');
+                extraFields.style.display = 'none';
             }
-
-            // Show the popup
-            popup.classList.add('show');
-
-            // Automatically hide the popup after 3 seconds
-            setTimeout(() => {
-                popup.classList.remove('show');
-            }, 3000);
-        }
-
-        // Example usage of showing popup (simulating flash messages)
-        document.addEventListener('DOMContentLoaded', function() {
-            {% with messages = get_flashed_messages(with_categories=true) %}
-              {% if messages %}
-                {% for category, message in messages %}
-                  showPopup("{{ message }}", "{{ category }}" === "danger");
-                {% endfor %}
-              {% endif %}
-            {% endwith %}
-        });
-
-        // Close the popup when clicking on the close button
-        function closePopup() {
-            document.getElementById('notificationPopup').classList.remove('show');
         }
     </script>
 </head>
@@ -181,29 +146,29 @@
         <form action="{{ url_for('register') }}" method="POST">
             <input type="text" name="username" placeholder="Username" required>
             <input type="password" name="password" placeholder="Password" required>
-            <input type="text" name="groups" placeholder="Groups (comma-separated)">
-            
+
             {% if show_role_selection %}
-            <select name="role" required>
-                <option value="user">User</option>
+            <select name="role" id="role" onchange="toggleFields()" required>
                 <option value="admin">Admin</option>
+                <option value="user">User</option>
             </select>
             {% endif %}
             
+            <div id="extra-fields" class="extra-fields">
+                <input type="text" name="name" placeholder="Full Name" required>
+                <input type="date" name="birthday" placeholder="Birthday" required>
+                <input type="number" step="1" name="balance" placeholder="Balance" value="0" required>
+                <input type="number" step="1" name="sellery" placeholder="Sallery" value="0" required>
+                <input type="number" step="1" name="interest" placeholder="Interest" value="0" required>
+                <input type="number" step="1" name="overdraft" placeholder="Overdraft" value="0" required>
+            </div>            
+
             <button type="submit" class="button">Create Account</button>
         </form>
 
-        <!-- Back Button -->
         <form action="{{ back_url }}" method="get">
             <button type="submit" class="back-button">Go Back</button>
         </form>
-        
-    </div>
-
-    <!-- Popup notification -->
-    <div id="notificationPopup" class="popup">
-        <span id="popupMessage"></span>
-        <button class="close-btn" onclick="closePopup()">✖</button>
     </div>
 </body>
 </html>
