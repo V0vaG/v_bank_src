@@ -15,7 +15,7 @@ version = os.getenv('B_NUM', '0.0.0')
 host = socket.gethostname()
 
 # Set up paths
-alias = "topix"
+alias = "v_bank"
 HOME_DIR = os.path.expanduser("~")
 FILES_PATH = os.path.join(HOME_DIR, "script_files", alias)
 DATA_DIR = os.path.join(FILES_PATH, "data")
