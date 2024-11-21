@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TopiX</title>
+    <title>Search Topics</title>
     <style>
         /* General reset and layout */
         body {
@@ -20,7 +20,7 @@
         /* Container styling */
         .container {
             background-color: white;
-            padding: 30px 50px;
+            padding: 20px 40px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
             text-align: center;
@@ -30,19 +30,32 @@
         h1 {
             font-size: 2rem;
             color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
-        /* List and buttons styling */
-        ul {
-            list-style-type: none;
-            padding: 0;
+        /* Label and input field styling */
+        label {
+            font-size: 1.2rem;
+            color: #555;
+            display: block;
+            margin-bottom: 10px;
         }
 
-        li {
-            margin-bottom: 15px;
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
         }
 
+        input[type="text"]:focus {
+            border-color: #4CAF50;
+        }
+
+        /* Pretty button styling */
         .button {
             padding: 12px 25px;
             background-color: #4CAF50;
@@ -53,8 +66,7 @@
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            display: inline-block;
-            text-decoration: none;
+            margin: 10px;
         }
 
         .button:hover {
@@ -66,22 +78,26 @@
             background-color: #3e8e41;
             transform: translateY(0);
         }
+
+        /* Additional layout for buttons */
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to TopiX</h1>
-        <h2 id="host" style="color:green;">Host: {{ host }}, ver: {{ version }}, user: {{ user }}</h2>
-        <ul>
-            <li><a href="{{ url_for('list_topics') }}" class="button">List All Topics</a></li>
-            <li><a href="{{ url_for('create_topic') }}" class="button">Create a New Topic</a></li>
-            <li><a href="{{ url_for('search_topic') }}" class="button">Search Topics</a></li>
-            {% if is_admin %}
-                <li><a href="{{ url_for('admin_area') }}" class="button" style="background-color: red;">Admin Area</a></li>
-            {% endif %}
-            <!-- Log Out Button -->
-            <li><a href="{{ url_for('logout') }}" class="button" style="background-color: #FF6347;">Log Out</a></li>
-        </ul>
+        <h1>Search Topics</h1>
+        <form action="{{ url_for('search_topic') }}" method="POST">
+            <label for="search_term">Search Term:</label>
+            <input type="text" id="search_term" name="search_term" required><br>
+            <div class="button-container">
+                <button type="submit" class="button">Search</button>
+                <button type="button" class="button" onclick="window.location.href='{{ url_for('home') }}'">Home</button>
+            </div>
+        </form>
     </div>
 </body>
 </html>
