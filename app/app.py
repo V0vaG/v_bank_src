@@ -310,6 +310,42 @@ def delete_user(username):
     flash(f"User '{username}' has been deleted.", "success")
     return redirect(url_for('admin_area'))
 
+@app.route('/adjust_balance/<username>', methods=['POST'])
+@login_required
+def adjust_balance(username):
+    # Ensure the logged-in user is an admin
+    active_username = session.get('active_user')
+
+    with open(USERS_FILE, 'r') as f:
+        users = json.load(f)
+
+    active_user = next((u for u in users if u['username'] == active_username), None)
+    if not active_user or active_user['kind'] != 'admin':
+        flash("You do not have permission to perform this action.", "danger")
+        return redirect(url_for('admin_area'))
+
+    # Find the user to adjust
+    user = next((u for u in users if u['username'] == username), None)
+    if not user:
+        flash(f"User '{username}' not found.", "danger")
+        return redirect(url_for('admin_area'))
+
+    # Adjust the user's balance
+    try:
+        amount = int(request.form.get('amount'))
+        user['balance'] += amount
+
+        # Save updated users list
+        with open(USERS_FILE, 'w') as f:
+            json.dump(users, f, indent=4)
+
+        flash(f"User '{username}' balance updated by {amount}.", "success")
+    except ValueError:
+        flash("Invalid amount entered.", "danger")
+
+    return redirect(url_for('admin_area'))
+
+
 @app.route('/toggle_registration', methods=['POST'])
 @login_required
 def toggle_registration():
