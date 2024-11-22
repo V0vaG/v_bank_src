@@ -81,12 +81,11 @@
                 <th>Sellery</th>
                 <th>Interest</th>
                 <th>Overdraft</th>
-                <th>Role</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            {% for user in user_data %}
+            {% for user in users %}
             <tr>
                 <td>{{ user.get('name', 'N/A') }}</td>
                 <td>{{ user.get('username', 'N/A') }}</td>
@@ -95,11 +94,10 @@
                 <td>{{ user.get('sellery', '0') }}</td>
                 <td>{{ user.get('interest', '0') }}</td>
                 <td>{{ user.get('overdraft', '0') }}</td>
-                <td>{{ user.get('kind', 'N/A') }}</td>
                 <td>
                     <!-- Edit User Button -->
                     <a href="{{ url_for('edit_user', username=user['username']) }}" class="button">Edit</a>
-                    
+
                     <!-- Delete User Button -->
                     <form action="{{ url_for('delete_user', username=user['username']) }}" method="POST" style="display:inline;">
                         <button class="button delete-button" type="submit">Delete</button>
@@ -115,5 +113,29 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <h2>Admin List</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for admin in admin_data %}
+            <tr>
+                <td>{{ admin.get('username', 'N/A') }}</td>
+                <td>
+                    <!-- Delete Admin Button -->
+                    <form action="{{ url_for('delete_user', username=admin['username']) }}" method="POST" style="display:inline;">
+                        <button class="button delete-button" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
 </body>
 </html>
