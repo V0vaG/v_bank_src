@@ -5,33 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Area</title>
     <style>
+        /* General Styling */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f4f8;
+            font-family: 'Arial', sans-serif;
+            background-color: #f9fbfd;
+            color: #333;
             padding: 20px;
+            margin: 0;
         }
 
         h1, h2 {
             text-align: center;
+            color: #4CAF50;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px auto;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
-
+        /* Buttons */
         .button {
+            display: inline-block;
             padding: 10px 20px;
             background-color: #4CAF50;
             color: white;
@@ -39,7 +29,8 @@
             border-radius: 5px;
             text-decoration: none;
             cursor: pointer;
-            margin: 5px;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
         }
 
         .button:hover {
@@ -57,6 +48,58 @@
         .button-container {
             text-align: center;
             margin-top: 20px;
+        }
+
+        /* Table Styling */
+        table {
+            width: 90%;
+            border-collapse: collapse;
+            margin: 20px auto;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Form in Table */
+        input[type="number"] {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            width: 70px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+        }
+
+        form {
+            display: inline-block;
+        }
+
+        button[type="submit"] {
+            font-size: 12px;
+            padding: 8px 12px;
         }
     </style>
 </head>
@@ -81,34 +124,50 @@
                 <th>Sellery</th>
                 <th>Interest</th>
                 <th>Overdraft</th>
-                <th>Role</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            {% for user in user_data %}
+            {% for user in users %}
             <tr>
                 <td>{{ user.get('name', 'N/A') }}</td>
                 <td>{{ user.get('username', 'N/A') }}</td>
                 <td>{{ user.get('birthday', 'N/A') }}</td>
-                <td>{{ user.get('balance', '0') }}</td>
-                <td>{{ user.get('sellery', '0') }}</td>
-                <td>{{ user.get('interest', '0') }}</td>
-                <td>{{ user.get('overdraft', '0') }}</td>
-                <td>{{ user.get('kind', 'N/A') }}</td>
+                <td>${{ user.get('balance', '0') }}</td>
+                <td>${{ user.get('sellery', '0') }}</td>
+                <td>{{ user.get('interest', '0') }}%</td>
+                <td>${{ user.get('overdraft', '0') }}</td>
                 <td>
                     <!-- Edit User Button -->
                     <a href="{{ url_for('edit_user', username=user['username']) }}" class="button">Edit</a>
-                    
-                    <!-- Delete User Button -->
-                    <form action="{{ url_for('delete_user', username=user['username']) }}" method="POST" style="display:inline;">
-                        <button class="button delete-button" type="submit">Delete</button>
-                    </form>
-
+                
                     <!-- Adjust Balance Form -->
-                    <form action="{{ url_for('adjust_balance', username=user['username']) }}" method="POST" style="display:inline;">
-                        <input type="number" name="amount" placeholder="Enter amount" required>
+                    <form action="{{ url_for('adjust_balance', username=user['username']) }}" method="POST">
+                        <input type="number" name="amount" placeholder="$" required>
                         <button class="button" type="submit">Submit</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Admin List</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for admin in admin_data %}
+            <tr>
+                <td>{{ admin.get('username', 'N/A') }}</td>
+                <td>
+                    <!-- Delete Admin Button -->
+                    <form action="{{ url_for('delete_user', username=admin['username']) }}" method="POST">
+                        <button class="button delete-button" type="submit">Delete</button>
                     </form>
                 </td>
             </tr>

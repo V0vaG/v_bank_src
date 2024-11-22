@@ -22,28 +22,33 @@ HOME_DIR = os.path.expanduser("~")
 FILES_PATH = os.path.join(HOME_DIR, "script_files", alias)
 DATA_DIR = os.path.join(FILES_PATH, "data")
 USERS_FILE = os.path.join(DATA_DIR, 'users.json')
+ADMINS_FILE = os.path.join(DATA_DIR, 'admins.json')
 
-# Ensure directories exist
+# Ensure the directory exists
 os.makedirs(DATA_DIR, exist_ok=True)
-if not os.path.exists(USERS_FILE):
-    with open(USERS_FILE, 'w') as f:
-        json.dump([], f)
+
+# Ensure both files exist
+for file in [USERS_FILE, ADMINS_FILE]:
+    if not os.path.exists(file):
+        with open(file, 'w') as f:
+            json.dump([], f)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    users_file = os.path.join(DATA_DIR, 'users.json')
+    if request.method == 'POST':
+        # Determine if the new account is a user or an admin
+        role = request.form.get('role', 'user')
+        users_file = USERS_FILE if role == 'user' else ADMINS_FILE
 
-    # Load existing users
-    if os.path.exists(users_file):
+
+
+        # Load the appropriate file
         with open(users_file, 'r') as f:
             users = json.load(f)
-    else:
-        users = []
 
-    if request.method == 'POST':
+        # Extract form data
         username = request.form.get('username')
         password = request.form.get('password')
-        role = request.form.get('role') if 'role' in request.form else 'user'
 
         # Check if username already exists
         if any(user['username'] == username for user in users):
@@ -54,22 +59,16 @@ def register():
         hashed_password = generate_password_hash(password)
 
         # Create a new user object
-        new_user = {
-            'username': username,
-            'password': hashed_password,
-            'kind': role  # 'admin' or 'user'
-        }
+        new_user = {'username': username, 'password': hashed_password, 'kind': role}
 
-        # If the role is 'user', include additional fields
+        # Additional fields for users
         if role == 'user':
             name = request.form.get('name')
-            birthday = request.form.get('birthday')  # New field
-            balance = request.form.get('balance', 0)  # Default to 0
-            sellery = request.form.get('sellery', 0)  # Default to 0
-            interest = request.form.get('interest', 0)  # Default to 0
-            overdraft = request.form.get('overdraft', 0)  # Default to 0
-
-            # Add additional fields to the user object
+            birthday = request.form.get('birthday')
+            balance = request.form.get('balance', 0)
+            sellery = request.form.get('sellery', 0)
+            interest = request.form.get('interest', 0)
+            overdraft = request.form.get('overdraft', 0)
             new_user.update({
                 'name': name,
                 'birthday': birthday,
@@ -79,18 +78,22 @@ def register():
                 'overdraft': int(overdraft)
             })
 
-        # Save the new user to the list
+        print(f"Saving to file: {users_file}")
+        print(f"New user data: {new_user}")
+
+        # Append the new user or admin to the list
         users.append(new_user)
+
+        # Save the updated list to the file
         with open(users_file, 'w') as f:
             json.dump(users, f, indent=4)
 
         flash(f"User created successfully as {role}!", "success")
         return redirect(url_for('show_login'))
 
-    # Check if accessed from admin area or login page
-    show_role_selection = 'admin_area' in request.args  # Flag for role dropdown
-    back_url = url_for('admin_area') if 'admin_area' in request.args else url_for('show_login')  # Determine where to go back to
-
+    # If GET, show the registration form
+    show_role_selection = 'admin_area' in request.args
+    back_url = url_for('admin_area') if 'admin_area' in request.args else url_for('show_login')
     return render_template('register.html', show_role_selection=show_role_selection, back_url=back_url)
 
 @app.route('/login', methods=['POST'])
@@ -98,24 +101,26 @@ def login():
     username = request.form.get('username')
     password = request.form.get('password')
 
-    # Load users
-    if os.path.exists(USERS_FILE):
-        with open(USERS_FILE, 'r') as f:
-            users = json.load(f)
-    else:
-        users = []
+    def find_user(file_path):
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                users = json.load(f)
+            return next((u for u in users if u['username'] == username), None)
+        return None
 
-    # Find the user by username
-    user = next((u for u in users if u['username'] == username), None)
+    # Search for the user in both files
+    user = find_user(USERS_FILE) or find_user(ADMINS_FILE)
 
-    # Check if the user exists and password matches
+    # Validate user and password
     if user and check_password_hash(user['password'], password):
-        session['active_user'] = username  # Store the username in the session
+        session['active_user'] = username
+        session['active_role'] = user['kind']  # Store the role (admin or user)
         flash("Login successful!", "success")
         return redirect(url_for('home'))
 
     flash("Invalid username or password.", "danger")
     return redirect(url_for('show_login'))
+
 
 @app.route('/')
 def show_login():
@@ -161,90 +166,76 @@ def login_required(f):
 @app.route('/index', methods=['GET', 'POST'])
 @login_required
 def home():
-    # Load the logged-in user's information
     username = session.get('active_user')
+    role = session.get('active_role')  # Get the user's role (admin or user)
 
-    # Load users data
-    with open(USERS_FILE, 'r') as f:
+    # Load the appropriate file based on the role
+    file_path = ADMINS_FILE if role == 'admin' else USERS_FILE
+    with open(file_path, 'r') as f:
         users = json.load(f)
 
-    # Find the current user
+    # Find the logged-in user's data
     user = next((u for u in users if u['username'] == username), None)
     if not user:
         flash("User not found.", "danger")
         return redirect(url_for('show_login'))
 
-    # Handle "Get Money" form submission
-    if request.method == 'POST':
-        try:
-            amount = int(request.form.get('amount', 0))
-            if amount <= 0:
-                flash("Enter a positive amount.", "danger")
-            elif user['balance'] < amount:
-                flash("Insufficient balance.", "danger")
-            else:
-                user['balance'] -= amount
-                # Save updated users data
-                with open(USERS_FILE, 'w') as f:
-                    json.dump(users, f, indent=4)
-                flash(f"${amount} withdrawn successfully!", "success")
-        except ValueError:
-            flash("Invalid amount entered.", "danger")
-
-    # Determine if the current user is an admin
-    is_admin = user['kind'] == 'admin'
-
-    # Pass the current year to the template
-    current_year = datetime.now().year
-
-    return render_template(
-        'index.html',
-        version=version,
-        host=host,
-        is_admin=is_admin,
-        user=user,
-        current_year=current_year
-    )
+    # Render admin or user-specific page
+    if role == 'admin':
+        return redirect(url_for('admin_area'))  # Redirect admins to the admin area
+    else:
+        # Handle regular user page logic
+        return render_template(
+            'index.html',
+            version=version,
+            host=host,
+            user=user,
+            role=role,
+            current_year=datetime.now().year
+        )
 
 @app.route('/admin', methods=['GET', 'POST'])
 @login_required
 def admin_area():
-    # Ensure the logged-in user is an admin
     username = session.get('active_user')
+    role = session.get('active_role')
 
+    # Ensure the logged-in user is an admin
+    if role != 'admin':
+        flash("Access denied. Admins only.", "danger")
+        return redirect(url_for('home'))
+
+    # Load all admins
+    with open(ADMINS_FILE, 'r') as f:
+        admins = json.load(f)
+
+    # Load all users
     with open(USERS_FILE, 'r') as f:
         users = json.load(f)
 
-    user = next((u for u in users if u['username'] == username), None)
-    if user and user['kind'] == 'admin':
-        # Load the external registration setting
-        config_file = os.path.join(DATA_DIR, 'config.json')
-        if os.path.exists(config_file):
-            with open(config_file, 'r') as f:
-                config = json.load(f)
-        else:
-            config = {"allow_registration": False}
-
-        allow_registration = config.get('allow_registration', False)
-
-        # Pass the users' data to the template
-        return render_template('admin.html', allow_registration=allow_registration, user_data=users)
-    
-    flash("You do not have access to the admin area.", "danger")
-    return redirect(url_for('home'))
+    # Render the admin page
+    return render_template(
+        'admin.html',
+        admin_data=admins,
+        users=users,
+        version=version,
+        host=host
+    )
 
 @app.route('/edit_user/<username>', methods=['GET', 'POST'])
 @login_required
 def edit_user(username):
     # Ensure the logged-in user is an admin
     active_username = session.get('active_user')
+    role = session.get('active_role')
+
+    if role != 'admin':
+        flash("Access denied. Admins only.", "danger")
+        return redirect(url_for('home'))
+
+    # Load all users
     with open(USERS_FILE, 'r') as f:
         users = json.load(f)
-
-    active_user = next((u for u in users if u['username'] == active_username), None)
-    if not active_user or active_user['kind'] != 'admin':
-        flash("You do not have permission to perform this action.", "danger")
-        return redirect(url_for('home'))
 
     # Find the user to edit
     user = next((u for u in users if u['username'] == username), None)
@@ -255,13 +246,12 @@ def edit_user(username):
     if request.method == 'POST':
         # Update user details
         user['name'] = request.form.get('name')
-        user['username'] = request.form.get('username')
         user['birthday'] = request.form.get('birthday')
         user['balance'] = int(request.form.get('balance', 0))
         user['sellery'] = int(request.form.get('sellery', 0))
         user['interest'] = int(request.form.get('interest', 0))
         user['overdraft'] = int(request.form.get('overdraft', 0))
-        user['kind'] = request.form.get('role')  # Update role
+        user['kind'] = request.form.get('role')
 
         # Handle password change
         new_password = request.form.get('password')
@@ -283,46 +273,53 @@ def edit_user(username):
 def delete_user(username):
     # Ensure the logged-in user is an admin
     active_username = session.get('active_user')
+    role = session.get('active_role')
 
-    with open(USERS_FILE, 'r') as f:
-        users = json.load(f)
-
-    # Check if the current user is an admin
-    active_user = next((u for u in users if u['username'] == active_username), None)
-    if not active_user or active_user['kind'] != 'admin':
-        flash("You do not have permission to perform this action.", "danger")
+    if role != 'admin':
+        flash("Access denied. Admins only.", "danger")
         return redirect(url_for('home'))
 
-    # Prevent the admin from deleting themselves
-    if active_username == username:
-        flash("You cannot delete yourself.", "danger")
+    # Determine which file to search (admins or users)
+    target_file = ADMINS_FILE if any(
+        admin.get('username') == username for admin in json.load(open(ADMINS_FILE))
+    ) else USERS_FILE
+
+    # Load the target file data
+    with open(target_file, 'r') as f:
+        users = json.load(f)
+
+    # Ensure the user isn't trying to delete themselves if they're an admin
+    if target_file == ADMINS_FILE and active_username == username:
+        flash("You cannot delete yourself as an admin.", "danger")
         return redirect(url_for('admin_area'))
 
     # Filter out the user to be deleted
     updated_users = [user for user in users if user['username'] != username]
 
     # Save the updated user list
-    with open(USERS_FILE, 'w') as f:
+    with open(target_file, 'w') as f:
         json.dump(updated_users, f, indent=4)
 
     flash(f"User '{username}' has been deleted.", "success")
     return redirect(url_for('admin_area'))
+
 
 @app.route('/adjust_balance/<username>', methods=['POST'])
 @login_required
 def adjust_balance(username):
     # Ensure the logged-in user is an admin
     active_username = session.get('active_user')
+    role = session.get('active_role')
 
+    if role != 'admin':
+        flash("Access denied. Admins only.", "danger")
+        return redirect(url_for('home'))
+
+    # Load the users from USERS_FILE
     with open(USERS_FILE, 'r') as f:
         users = json.load(f)
 
-    active_user = next((u for u in users if u['username'] == active_username), None)
-    if not active_user or active_user['kind'] != 'admin':
-        flash("You do not have permission to perform this action.", "danger")
-        return redirect(url_for('admin_area'))
-
-    # Find the user to adjust
+    # Find the user whose balance is to be adjusted
     user = next((u for u in users if u['username'] == username), None)
     if not user:
         flash(f"User '{username}' not found.", "danger")
@@ -333,15 +330,16 @@ def adjust_balance(username):
         amount = int(request.form.get('amount'))
         user['balance'] += amount
 
-        # Save updated users list
+        # Save the updated users data
         with open(USERS_FILE, 'w') as f:
             json.dump(users, f, indent=4)
 
-        flash(f"User '{username}' balance updated by {amount}.", "success")
+        flash(f"User '{username}' balance updated by {amount}. New balance: {user['balance']}.", "success")
     except ValueError:
-        flash("Invalid amount entered.", "danger")
+        flash("Invalid amount entered. Please enter a valid number.", "danger")
 
     return redirect(url_for('admin_area'))
+
 
 @app.route('/toggle_registration', methods=['POST'])
 @login_required

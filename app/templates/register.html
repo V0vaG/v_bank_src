@@ -3,172 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create a New Account</title>
+    <title>Register</title>
     <style>
-        /* General reset and layout */
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .container {
-            background-color: white;
-            padding: 40px 50px;
-            border-radius: 15px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            padding: 20px;
         }
 
         h1 {
-            font-size: 2.5rem;
-            color: #333;
-            margin-bottom: 30px;
+            text-align: center;
         }
 
         form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
-        input[type="text"], 
-        input[type="password"], 
-        input[type="date"], 
-        input[type="number"], 
-        select {
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        input, select, button {
             width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            box-sizing: border-box;
-            font-size: 1rem;
-            transition: border-color 0.3s;
+            padding: 10px;
+            margin: 5px 0 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
 
-        input:focus, 
-        select:focus {
-            border-color: #4CAF50;
-            outline: none;
-        }
-
-        .button {
-            padding: 15px 30px;
+        button {
             background-color: #4CAF50;
             color: white;
             border: none;
-            border-radius: 30px;
-            font-size: 1.2rem;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            text-decoration: none;
-            width: 100%;
         }
 
-        .button:hover {
+        button:hover {
             background-color: #45a049;
-            transform: translateY(-2px);
         }
 
-        .button:active {
-            background-color: #3e8e41;
-            transform: translateY(0);
-        }
-
-        .back-button {
-            margin-top: 15px;
-            padding: 15px 30px;
-            background-color: #f44336;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            text-decoration: none;
-            width: 100%;
-        }
-
-        .back-button:hover {
-            background-color: #e53935;
-            transform: translateY(-2px);
-        }
-
-        .back-button:active {
-            background-color: #d32f2f;
-            transform: translateY(0);
-        }
-
-        .extra-fields {
+        .user-fields {
             display: none;
-            width: 100%;
-            margin-top: 20px;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
     </style>
-    <script>
-        function toggleFields() {
-            const role = document.getElementById('role').value;
-            const extraFields = document.getElementById('extra-fields');
-            if (role === 'user') {
-                extraFields.style.display = 'block';
-            } else {
-                extraFields.style.display = 'none';
-            }
-        }
-    </script>
 </head>
 <body>
-    <div class="container">
-        <h1>Create a New Account</h1>
-        
-        <form action="{{ url_for('register') }}" method="POST">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
+    <h1>Register</h1>
+    <form method="POST">
+        <label for="username">Username:</label>
+        <input type="text" name="username" id="username" required>
 
-            {% if show_role_selection %}
-            <select name="role" id="role" onchange="toggleFields()" required>
-                <option value="admin">Admin</option>
-                <option value="user">User</option>
-            </select>
-            {% endif %}
-            
-            <div id="extra-fields" class="extra-fields">
-                <input type="text" name="name" placeholder="Full Name" required>
-                <input type="date" name="birthday" placeholder="Birthday" required>
-                <input type="number" step="1" name="balance" placeholder="Balance" value="0" required>
-                <input type="number" step="1" name="sellery" placeholder="Sallery" value="0" required>
-                <input type="number" step="1" name="interest" placeholder="Interest" value="0" required>
-                <input type="number" step="1" name="overdraft" placeholder="Overdraft" value="0" required>
-            </div>            
+        <label for="password">Password:</label>
+        <input type="password" name="password" id="password" required>
 
-            <button type="submit" class="button">Create Account</button>
-        </form>
+        <label for="role">Role:</label>
+        <select name="role" id="role" onchange="toggleUserFields()">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+        </select>
 
-        <form action="{{ back_url }}" method="get">
-            <button type="submit" class="back-button">Go Back</button>
-        </form>
-    </div>
+        <!-- Additional fields for users -->
+        <div id="user-fields" class="user-fields">
+            <label for="name">Name:</label>
+            <input type="text" name="name" id="name">
+
+            <label for="birthday">Birthday:</label>
+            <input type="date" name="birthday" id="birthday">
+
+            <label for="balance">Balance:</label>
+            <input type="number" name="balance" id="balance" value="0">
+
+            <label for="sellery">Sellery:</label>
+            <input type="number" name="sellery" id="sellery" value="0">
+
+            <label for="interest">Interest:</label>
+            <input type="number" name="interest" id="interest" value="0">
+
+            <label for="overdraft">Overdraft:</label>
+            <input type="number" name="overdraft" id="overdraft" value="0">
+        </div>
+
+        <button type="submit">Register</button>
+
+        <a href="{{ back_url }}">Cancel</a>
+    </form>
+
+    <script>
+        function toggleUserFields() {
+            const role = document.getElementById('role').value;
+            const userFields = document.getElementById('user-fields');
+            if (role === 'user') {
+                userFields.style.display = 'block';
+            } else {
+                userFields.style.display = 'none';
+            }
+        }
+
+        // Initialize visibility on page load
+        document.addEventListener('DOMContentLoaded', toggleUserFields);
+    </script>
 </body>
 </html>
