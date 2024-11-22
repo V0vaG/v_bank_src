@@ -208,9 +208,6 @@ def home():
         current_year=current_year
     )
 
-
-
-
 @app.route('/admin', methods=['GET', 'POST'])
 @login_required
 def admin_area():
@@ -339,4 +336,5 @@ def toggle_registration():
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
+    print("Loading config file from:", USERS_FILE)
     app.run(debug=True)
