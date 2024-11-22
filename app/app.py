@@ -167,32 +167,55 @@ def login_required(f):
 @login_required
 def home():
     username = session.get('active_user')
-    role = session.get('active_role')  # Get the user's role (admin or user)
+    role = session.get('active_role')
 
-    # Load the appropriate file based on the role
+    # Determine the correct file based on the role
     file_path = ADMINS_FILE if role == 'admin' else USERS_FILE
-    with open(file_path, 'r') as f:
-        users = json.load(f)
+    try:
+        with open(file_path, 'r') as f:
+            users = json.load(f)
+    except FileNotFoundError:
+        flash("Error loading user data. Please contact support.", "danger")
+        return redirect(url_for('show_login'))
 
     # Find the logged-in user's data
     user = next((u for u in users if u['username'] == username), None)
     if not user:
-        flash("User not found.", "danger")
+        flash("User not found. Please log in again.", "danger")
         return redirect(url_for('show_login'))
 
-    # Render admin or user-specific page
+    # Redirect admin users to the admin area
     if role == 'admin':
-        return redirect(url_for('admin_area'))  # Redirect admins to the admin area
-    else:
-        # Handle regular user page logic
-        return render_template(
-            'index.html',
-            version=version,
-            host=host,
-            user=user,
-            role=role,
-            current_year=datetime.now().year
-        )
+        return redirect(url_for('admin_area'))
+
+    # Handle withdrawal for regular users
+    if request.method == 'POST':
+        try:
+            amount = int(request.form.get('amount'))
+            if amount <= 0:
+                flash("Please enter a positive withdrawal amount.", "danger")
+            elif user['balance'] - amount < -user.get('overdraft', 0):
+                flash("Withdrawal denied. Overdraft limit exceeded.", "danger")
+            else:
+                user['balance'] -= amount
+                # Save updated user data
+                with open(file_path, 'w') as f:
+                    json.dump(users, f, indent=4)
+
+                flash(f"Successfully withdrew ${amount}. New balance: ${user['balance']}", "success")
+        except ValueError:
+            flash("Invalid input. Please enter a valid number.", "danger")
+
+    # Render the user's page
+    return render_template(
+        'index.html',
+        version=version,
+        host=host,
+        user=user,
+        role=role,
+        current_year=datetime.now().year
+    )
+
 
 @app.route('/admin', methods=['GET', 'POST'])
 @login_required
@@ -200,20 +223,18 @@ def admin_area():
     username = session.get('active_user')
     role = session.get('active_role')
 
-    # Ensure the logged-in user is an admin
     if role != 'admin':
         flash("Access denied. Admins only.", "danger")
         return redirect(url_for('home'))
 
-    # Load all admins
+    # Debug to verify admin file content
     with open(ADMINS_FILE, 'r') as f:
         admins = json.load(f)
+        print("Admins loaded:", admins)
 
-    # Load all users
     with open(USERS_FILE, 'r') as f:
         users = json.load(f)
 
-    # Render the admin page
     return render_template(
         'admin.html',
         admin_data=admins,
@@ -221,6 +242,7 @@ def admin_area():
         version=version,
         host=host
     )
+
 
 @app.route('/edit_user/<username>', methods=['GET', 'POST'])
 @login_required

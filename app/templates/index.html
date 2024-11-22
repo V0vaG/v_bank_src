@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>V-Bank - Home</title>
     <style>
-        /* General reset and layout */
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f4f7fa;
@@ -128,14 +127,62 @@
             background-color: #c0392b; /* Darker red */
         }
 
-        .footer {
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: #95a5a6;
+        /* Popup Notification Styling */
+        .popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: white;
+            color: #333;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .popup.success {
+            border-left: 5px solid #28a745;
+        }
+
+        .popup.danger {
+            border-left: 5px solid #dc3545;
+        }
+
+        .popup .close-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #666;
+            margin-left: 15px;
+        }
+
+        .popup .close-btn:hover {
+            color: #333;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Popup Notification -->
+    <div id="notificationPopup" class="popup">
+        <span id="popupMessage"></span>
+        <button class="close-btn" onclick="closePopup()">✖</button>
+    </div>
+
     <div class="container">
         <h1>Welcome to V-Bank</h1>
         <h2 id="host">Host: {{ host }}, Version: {{ version }}, User: {{ user['username'] }}</h2>
@@ -175,8 +222,34 @@
             <a href="{{ url_for('logout') }}" class="button button-logout">Logout</a>
         {% endif %}
     </div>
+
     <div class="footer">
         &copy; {{ current_year }} V-Bank. All rights reserved.
     </div>
+
+    <script>
+        function showPopup(message, category) {
+            const popup = document.getElementById('notificationPopup');
+            const popupMessage = document.getElementById('popupMessage');
+            popupMessage.textContent = message;
+            popup.classList.add(category);
+            popup.style.display = 'block';
+            setTimeout(() => popup.style.display = 'none', 5000); // Auto-hide after 5 seconds
+        }
+
+        function closePopup() {
+            const popup = document.getElementById('notificationPopup');
+            popup.style.display = 'none';
+        }
+
+        // Handle Flask flash messages
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    showPopup("{{ message }}", "{{ category }}");
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </script>
 </body>
 </html>
