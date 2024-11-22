@@ -6,38 +6,56 @@
     <title>Edit User</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f4f8;
+            font-family: 'Arial', sans-serif;
+            background-color: #f9fbfd;
+            color: #333;
             padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4CAF50;
         }
 
         form {
-            max-width: 500px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         label {
             display: block;
-            margin: 10px 0 5px;
+            font-weight: bold;
+            margin: 15px 0 5px;
         }
 
         input, select, button {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             margin: 5px 0 20px;
             border: 1px solid #ccc;
             border-radius: 5px;
+            font-size: 16px;
+        }
+
+        input:focus, select:focus {
+            border-color: #4CAF50;
+            outline: none;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
         }
 
         button {
             background-color: #4CAF50;
             color: white;
+            font-size: 18px;
+            font-weight: bold;
             border: none;
             cursor: pointer;
+            transition: background-color 0.3s ease;
         }
 
         button:hover {
@@ -56,33 +74,44 @@
             text-align: center;
             margin-top: 20px;
         }
+
+        .button-container form {
+            display: inline-block;
+        }
+
+        .notice {
+            text-align: center;
+            font-size: 14px;
+            color: #555;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
     <h1>Edit User</h1>
     <form method="POST">
-        <label for="name">Name:</label>
-        <input type="text" name="name" id="name" value="{{ user.get('name', '') }}">
+        <label for="name">Name</label>
+        <input type="text" name="name" id="name" value="{{ user.get('name', '') }}" placeholder="Enter user's name">
 
-        <label for="username">Username:</label>
+        <label for="username">Username</label>
         <input type="text" name="username" id="username" value="{{ user.get('username', '') }}" readonly>
 
-        <label for="birthday">Birthday:</label>
+        <label for="birthday">Birthday</label>
         <input type="date" name="birthday" id="birthday" value="{{ user.get('birthday', '') }}">
 
-        <label for="balance">Balance:</label>
-        <input type="number" name="balance" id="balance" value="{{ user.get('balance', 0) }}">
+        <label for="balance">Balance</label>
+        <input type="number" name="balance" id="balance" value="{{ user.get('balance', 0) }}" placeholder="Enter balance">
 
-        <label for="sellery">Sellery:</label>
-        <input type="number" name="sellery" id="sellery" value="{{ user.get('sellery', 0) }}">
+        <label for="sellery">Sellery</label>
+        <input type="number" name="sellery" id="sellery" value="{{ user.get('sellery', 0) }}" placeholder="Enter sellery">
 
-        <label for="interest">Interest:</label>
-        <input type="number" name="interest" id="interest" value="{{ user.get('interest', 0) }}">
+        <label for="interest">Interest</label>
+        <input type="number" name="interest" id="interest" value="{{ user.get('interest', 0) }}" placeholder="Enter interest rate">
 
-        <label for="overdraft">Overdraft:</label>
-        <input type="number" name="overdraft" id="overdraft" value="{{ user.get('overdraft', 0) }}">
+        <label for="overdraft">Overdraft</label>
+        <input type="number" name="overdraft" id="overdraft" value="{{ user.get('overdraft', 0) }}" placeholder="Enter overdraft limit">
 
-        <label for="role">Role:</label>
+        <label for="role">Role</label>
         <select name="role" id="role">
             <option value="user" {% if user.get('kind') == 'user' %}selected{% endif %}>User</option>
             <option value="admin" {% if user.get('kind') == 'admin' %}selected{% endif %}>Admin</option>
@@ -93,9 +122,13 @@
 
     <!-- Delete User Button -->
     <div class="button-container">
-        <form action="{{ url_for('delete_user', username=user['username']) }}" method="POST" style="display:inline;">
+        <form action="{{ url_for('delete_user', username=user['username']) }}" method="POST">
             <button class="delete-button" type="submit">Delete User</button>
         </form>
+    </div>
+
+    <div class="notice">
+        <p>Note: The username is read-only to prevent accidental changes.</p>
     </div>
 </body>
 </html>
