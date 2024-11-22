@@ -29,7 +29,6 @@ if not os.path.exists(USERS_FILE):
     with open(USERS_FILE, 'w') as f:
         json.dump([], f)
 
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     users_file = os.path.join(DATA_DIR, 'users.json')
@@ -93,7 +92,6 @@ def register():
     back_url = url_for('admin_area') if 'admin_area' in request.args else url_for('show_login')  # Determine where to go back to
 
     return render_template('register.html', show_role_selection=show_role_selection, back_url=back_url)
-
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -344,7 +342,6 @@ def adjust_balance(username):
         flash("Invalid amount entered.", "danger")
 
     return redirect(url_for('admin_area'))
-
 
 @app.route('/toggle_registration', methods=['POST'])
 @login_required
