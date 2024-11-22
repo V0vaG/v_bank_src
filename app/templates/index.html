@@ -8,7 +8,7 @@
         /* General reset and layout */
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f8fafc;
+            background-color: #f4f7fa;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -18,12 +18,12 @@
         }
 
         .container {
-            background-color: white;
+            background: linear-gradient(135deg, #8ec5fc, #e0c3fc); /* Light blue and lavender */
             padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
             text-align: center;
-            max-width: 600px;
+            max-width: 700px;
             width: 90%;
         }
 
@@ -33,40 +33,49 @@
             margin-bottom: 20px;
         }
 
-        h2 {
+        h2, h3 {
             font-size: 1.2rem;
-            color: #16a085;
-            margin-bottom: 30px;
+            color: #34495e;
+            margin-bottom: 20px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-
-        table, th, td {
-            border: 1px solid #e0e0e0;
+            margin: 20px 0;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         th, td {
-            padding: 12px 15px;
+            padding: 15px;
             text-align: center;
+            font-size: 1rem;
         }
 
         th {
-            background-color: #f2f2f2;
+            background-color: #7f8c8d; /* Neutral grey */
+            color: white;
             font-weight: bold;
-            color: #34495e;
         }
 
         td {
             color: #2c3e50;
         }
 
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f5fc;
+        }
+
         label {
             font-size: 1rem;
-            color: #34495e;
+            color: #2c3e50;
             margin-bottom: 10px;
             display: inline-block;
         }
@@ -78,43 +87,45 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 1rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        input:focus {
+            border-color: #6c5ce7;
+            outline: none;
+            box-shadow: 0 0 5px rgba(108, 92, 231, 0.5); /* Violet focus */
         }
 
         .button {
             padding: 12px 25px;
-            background-color: #3498db;
+            background-color: #6c5ce7; /* Violet */
             color: white;
             border: none;
             border-radius: 30px;
             font-size: 1.1rem;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             text-decoration: none;
             display: inline-block;
             margin: 10px 5px;
         }
 
         .button:hover {
-            background-color: #2980b9;
+            background-color: #5a4db5; /* Darker violet */
             transform: translateY(-2px);
         }
 
         .button:active {
-            background-color: #2471a3;
+            background-color: #4a3d9d; /* Even darker violet */
             transform: translateY(0);
         }
 
         .button-logout {
-            background-color: #e74c3c;
+            background-color: #e74c3c; /* Soft red */
         }
 
         .button-logout:hover {
-            background-color: #c0392b;
-        }
-
-        .button-logout:active {
-            background-color: #a93226;
+            background-color: #c0392b; /* Darker red */
         }
 
         .footer {
@@ -127,35 +138,39 @@
 <body>
     <div class="container">
         <h1>Welcome to V-Bank</h1>
-        <h2 id="host">Host: {{ host }}, ver: {{ version }}, user: {{ user['username'] }}</h2>
+        <h2 id="host">Host: {{ host }}, Version: {{ version }}, User: {{ user['username'] }}</h2>
 
         {% if is_admin %}
-            <a href="{{ url_for('admin_area') }}" class="button" style="background-color: red;">Admin Area</a>
+            <a href="{{ url_for('admin_area') }}" class="button" style="background-color: #e67e22;">Admin Area</a>
         {% else %}
-            <h3>Your Account Information</h3>
+            <h3>Your Account Overview</h3>
             <table>
-                <tr>
-                    <th>Name</th>
-                    <th>Birthday</th>
-                    <th>Balance</th>
-                    <th>Sellery</th>
-                    <th>Interest</th>
-                    <th>Overdraft</th>
-                </tr>
-                <tr>
-                    <td>{{ user['name'] }}</td>
-                    <td>{{ user['birthday'] }}</td>
-                    <td>${{ user['balance'] }}</td>
-                    <td>${{ user['sellery'] }}</td>
-                    <td>{{ user['interest'] }}%</td>
-                    <td>${{ user['overdraft'] }}</td>
-                </tr>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Birthday</th>
+                        <th>Balance</th>
+                        <th>Sellery</th>
+                        <th>Interest</th>
+                        <th>Overdraft</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ user['name'] }}</td>
+                        <td>{{ user['birthday'] }}</td>
+                        <td>${{ user['balance'] }}</td>
+                        <td>${{ user['sellery'] }}</td>
+                        <td>{{ user['interest'] }}%</td>
+                        <td>${{ user['overdraft'] }}</td>
+                    </tr>
+                </tbody>
             </table>
 
             <form method="POST">
                 <label for="amount">Enter amount to withdraw:</label>
                 <input type="number" id="amount" name="amount" min="1" required>
-                <button type="submit" class="button">Get Money</button>
+                <button type="submit" class="button">Withdraw Money</button>
             </form>
             <a href="{{ url_for('logout') }}" class="button button-logout">Logout</a>
         {% endif %}
