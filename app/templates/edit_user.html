@@ -11,86 +11,91 @@
             padding: 20px;
         }
 
-        h1 {
-            text-align: center;
-        }
-
         form {
             max-width: 500px;
-            margin: 0 auto;
-            background: #fff;
+            margin: auto;
+            background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+            margin: 10px 0 5px;
         }
 
-        input, select {
+        input, select, button {
             width: 100%;
             padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            margin: 5px 0 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
 
-        .button {
-            display: inline-block;
+        button {
             background-color: #4CAF50;
             color: white;
-            padding: 10px 20px;
             border: none;
-            border-radius: 5px;
-            text-decoration: none;
             cursor: pointer;
         }
 
-        .button:hover {
+        button:hover {
             background-color: #45a049;
+        }
+
+        .delete-button {
+            background-color: #f44336;
+        }
+
+        .delete-button:hover {
+            background-color: #d32f2f;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <h1>Edit User</h1>
     <form method="POST">
-        <label for="name">Name</label>
-        <input type="text" id="name" name="name" value="{{ user['name'] }}" required>
+        <label for="name">Name:</label>
+        <input type="text" name="name" id="name" value="{{ user.get('name', '') }}">
 
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" value="{{ user['username'] }}" required>
+        <label for="username">Username:</label>
+        <input type="text" name="username" id="username" value="{{ user.get('username', '') }}" readonly>
 
-        <label for="password">New Password (leave blank to keep current password)</label>
-        <input type="password" id="password" name="password">
+        <label for="birthday">Birthday:</label>
+        <input type="date" name="birthday" id="birthday" value="{{ user.get('birthday', '') }}">
 
-        <label for="birthday">Birthday</label>
-        <input type="date" id="birthday" name="birthday" value="{{ user['birthday'] }}">
+        <label for="balance">Balance:</label>
+        <input type="number" name="balance" id="balance" value="{{ user.get('balance', 0) }}">
 
-        <label for="balance">Balance</label>
-        <input type="number" id="balance" name="balance" value="{{ user['balance'] }}" required>
+        <label for="sellery">Sellery:</label>
+        <input type="number" name="sellery" id="sellery" value="{{ user.get('sellery', 0) }}">
 
-        <label for="sellery">Sellery</label>
-        <input type="number" id="sellery" name="sellery" value="{{ user['sellery'] }}" required>
+        <label for="interest">Interest:</label>
+        <input type="number" name="interest" id="interest" value="{{ user.get('interest', 0) }}">
 
-        <label for="interest">Interest</label>
-        <input type="number" id="interest" name="interest" value="{{ user['interest'] }}" required>
+        <label for="overdraft">Overdraft:</label>
+        <input type="number" name="overdraft" id="overdraft" value="{{ user.get('overdraft', 0) }}">
 
-        <label for="overdraft">Overdraft</label>
-        <input type="number" id="overdraft" name="overdraft" value="{{ user['overdraft'] }}" required>
-
-        <label for="role">Role</label>
-        <select id="role" name="role" required>
-            <option value="user" {% if user['kind'] == 'user' %}selected{% endif %}>User</option>
-            <option value="admin" {% if user['kind'] == 'admin' %}selected{% endif %}>Admin</option>
+        <label for="role">Role:</label>
+        <select name="role" id="role">
+            <option value="user" {% if user.get('kind') == 'user' %}selected{% endif %}>User</option>
+            <option value="admin" {% if user.get('kind') == 'admin' %}selected{% endif %}>Admin</option>
         </select>
 
-        <div style="text-align: center;">
-            <button class="button" type="submit">Save Changes</button>
-            <a href="{{ url_for('admin_area') }}" class="button">Cancel</a>
-        </div>
+        <button type="submit">Save Changes</button>
     </form>
+
+    <!-- Delete User Button -->
+    <div class="button-container">
+        <form action="{{ url_for('delete_user', username=user['username']) }}" method="POST" style="display:inline;">
+            <button class="delete-button" type="submit">Delete User</button>
+        </form>
+    </div>
 </body>
 </html>

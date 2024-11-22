@@ -227,13 +227,15 @@ def admin_area():
 def edit_user(username):
     # Ensure the logged-in user is an admin
     active_username = session.get('active_user')
+    role = session.get('active_role')
+
+    if role != 'admin':
+        flash("Access denied. Admins only.", "danger")
+        return redirect(url_for('home'))
+
+    # Load all users
     with open(USERS_FILE, 'r') as f:
         users = json.load(f)
-
-    active_user = next((u for u in users if u['username'] == active_username), None)
-    if not active_user or active_user['kind'] != 'admin':
-        flash("You do not have permission to perform this action.", "danger")
-        return redirect(url_for('home'))
 
     # Find the user to edit
     user = next((u for u in users if u['username'] == username), None)
@@ -244,13 +246,12 @@ def edit_user(username):
     if request.method == 'POST':
         # Update user details
         user['name'] = request.form.get('name')
-        user['username'] = request.form.get('username')
         user['birthday'] = request.form.get('birthday')
         user['balance'] = int(request.form.get('balance', 0))
         user['sellery'] = int(request.form.get('sellery', 0))
         user['interest'] = int(request.form.get('interest', 0))
         user['overdraft'] = int(request.form.get('overdraft', 0))
-        user['kind'] = request.form.get('role')  # Update role
+        user['kind'] = request.form.get('role')
 
         # Handle password change
         new_password = request.form.get('password')
