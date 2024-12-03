@@ -6,7 +6,6 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import socket
 from functools import wraps
-from funcs import *
 from datetime import datetime
 
 
@@ -266,28 +265,38 @@ def edit_user(username):
         return redirect(url_for('admin_area'))
 
     if request.method == 'POST':
-        # Update user details
-        user['name'] = request.form.get('name')
-        user['birthday'] = request.form.get('birthday')
-        user['balance'] = int(request.form.get('balance', 0))
-        user['sellery'] = int(request.form.get('sellery', 0))
-        user['interest'] = int(request.form.get('interest', 0))
-        user['overdraft'] = int(request.form.get('overdraft', 0))
-        user['kind'] = request.form.get('role')
+        try:
+            # Update user details
+            user['name'] = request.form.get('name')
+            user['birthday'] = request.form.get('birthday')
 
-        # Handle password change
-        new_password = request.form.get('password')
-        if new_password:
-            user['password'] = generate_password_hash(new_password)
+            # Handle balance with rounding to one decimal place
+            balance_input = request.form.get('balance', '0')
+            user['balance'] = round(float(balance_input), 1)
 
-        # Save updated users list
-        with open(USERS_FILE, 'w') as f:
-            json.dump(users, f, indent=4)
+            # Handle other fields as floats
+            user['sellery'] = float(request.form.get('sellery', 0))
+            user['interest'] = float(request.form.get('interest', 0))
+            user['overdraft'] = float(request.form.get('overdraft', 0))
+            user['kind'] = request.form.get('role')
 
-        flash(f"User '{username}' updated successfully.", "success")
-        return redirect(url_for('admin_area'))
+            # Handle password change
+            new_password = request.form.get('password')
+            if new_password:
+                user['password'] = generate_password_hash(new_password)
+
+            # Save updated users list
+            with open(USERS_FILE, 'w') as f:
+                json.dump(users, f, indent=4)
+
+            flash(f"User '{username}' updated successfully.", "success")
+            return redirect(url_for('admin_area'))
+        except ValueError:
+            flash("Invalid input. Please enter valid numerical values.", "danger")
+            return redirect(url_for('edit_user', username=username))
 
     return render_template('edit_user.html', user=user)
+
 
 
 @app.route('/delete_user/<username>', methods=['POST'])
