@@ -51,22 +51,57 @@
         .user-fields {
             display: none;
         }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .actions a {
+            text-decoration: none;
+            color: #4CAF50;
+            padding: 10px;
+            border: 1px solid #4CAF50;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .actions a:hover {
+            background-color: #4CAF50;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <h1>Register</h1>
-    <form method="POST">
-        <label for="username">Username:</label>
-        <input type="text" name="username" id="username" required>
+    <form action="{{ url_for('register') }}" method="POST">
+        <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
 
-        <label for="password">Password:</label>
-        <input type="password" name="password" id="password" required>
-
-        <label for="role">Role:</label>
-        <select name="role" id="role" onchange="toggleUserFields()">
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-        </select>
+        <!-- Role dropdown -->
+        {% if first_admin %}
+            <input type="hidden" name="role" value="admin">
+            <div>
+                <label>Role:</label>
+                <select id="role" name="role" disabled>
+                    <option value="admin" selected>Admin</option>
+                </select>
+            </div>
+        {% else %}
+            <div>
+                <label for="role">Role:</label>
+                <select id="role" name="role" onchange="toggleUserFields()">
+                    <option value="user" selected>User</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+        {% endif %}
 
         <!-- Additional fields for users -->
         <div id="user-fields" class="user-fields">
@@ -89,9 +124,10 @@
             <input type="number" name="overdraft" id="overdraft" value="0">
         </div>
 
-        <button type="submit">Register</button>
-
-        <a href="{{ back_url }}">Cancel</a>
+        <div class="actions">
+            <button type="submit">Register</button>
+            <a href="{{ back_url }}">Cancel</a>
+        </div>
     </form>
 
     <script>

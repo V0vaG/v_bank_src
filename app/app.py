@@ -39,8 +39,6 @@ def register():
         role = request.form.get('role', 'user')
         users_file = USERS_FILE if role == 'user' else ADMINS_FILE
 
-
-
         # Load the appropriate file
         with open(users_file, 'r') as f:
             users = json.load(f)
@@ -77,9 +75,6 @@ def register():
                 'overdraft': int(overdraft)
             })
 
-        print(f"Saving to file: {users_file}")
-        print(f"New user data: {new_user}")
-
         # Append the new user or admin to the list
         users.append(new_user)
 
@@ -93,7 +88,23 @@ def register():
     # If GET, show the registration form
     show_role_selection = 'admin_area' in request.args
     back_url = url_for('admin_area') if 'admin_area' in request.args else url_for('show_login')
-    return render_template('register.html', show_role_selection=show_role_selection, back_url=back_url)
+
+    # Check if this is the first admin being created
+    if os.path.exists(ADMINS_FILE):
+        with open(ADMINS_FILE, 'r') as f:
+            admins = json.load(f)
+    else:
+        admins = []
+
+    first_admin = len(admins) == 0
+
+    return render_template(
+        'register.html',
+        show_role_selection=show_role_selection,
+        back_url=back_url,
+        first_admin=first_admin
+    )
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -120,19 +131,27 @@ def login():
     flash("Invalid username or password.", "danger")
     return redirect(url_for('show_login'))
 
-
 @app.route('/')
 def show_login():
-    # Load users from the JSON file
-    users_file = os.path.join(DATA_DIR, 'users.json')
-    if os.path.exists(users_file):
-        with open(users_file, 'r') as f:
+    # Check if users exist
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, 'r') as f:
             users = json.load(f)
     else:
         users = []
 
     # Check if there are no users
     no_users_exist = len(users) == 0
+
+    # Check if admins exist
+    if os.path.exists(ADMINS_FILE):
+        with open(ADMINS_FILE, 'r') as f:
+            admins = json.load(f)
+    else:
+        admins = []
+
+    # No admins exist if the list is empty
+    no_admins_exist = len(admins) == 0
 
     # Load the external registration setting
     config_file = os.path.join(DATA_DIR, 'config.json')
@@ -144,7 +163,13 @@ def show_login():
 
     allow_registration = config.get('allow_registration', False)
 
-    return render_template('login.html', no_users_exist=no_users_exist, allow_registration=allow_registration)
+    return render_template(
+        'login.html',
+        no_users_exist=no_users_exist,
+        no_admins_exist=no_admins_exist,
+        allow_registration=allow_registration
+    )
+
 
 @app.route('/logout')
 def logout():
