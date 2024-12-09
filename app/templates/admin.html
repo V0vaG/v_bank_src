@@ -124,6 +124,7 @@
                 <th>Sellery</th>
                 <th>Interest</th>
                 <th>Overdraft</th>
+                <th>Parent</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -137,6 +138,7 @@
                 <td>${{ user.get('sellery', '0') }}</td>
                 <td>{{ user.get('interest', '0') }}%</td>
                 <td>${{ user.get('overdraft', '0') }}</td>
+                <td>{{ user.get('parent', 'N/A') }}</td>
                 <td>
                     <!-- Edit User Button -->
                     <a href="{{ url_for('edit_user', username=user['username']) }}" class="button">Edit</a>

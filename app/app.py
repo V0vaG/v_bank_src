@@ -55,8 +55,15 @@ def register():
         # Hash the password before saving it
         hashed_password = generate_password_hash(password)
 
+        # Get the currently logged-in user if available
+        parent = session.get('active_user') if session.get('active_role') == 'admin' else None
+
         # Create a new user object
         new_user = {'username': username, 'password': hashed_password, 'kind': role}
+
+        # Add the parent field if the role is 'user' and an admin is creating the user
+        if role == 'user' and parent:
+            new_user['parent'] = parent
 
         # Additional fields for users
         if role == 'user':
