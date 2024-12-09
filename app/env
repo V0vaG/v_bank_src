@@ -1,2 +1,2 @@
-VOLUMES="['/home/$USER/script_files22/${proejct}:/root/script_files/${proejct}']"
+VOLUMES="['/home/$USER/script_files/${proejct}:/root/script_files/${proejct}']"
 VERSION='1.0.478'
