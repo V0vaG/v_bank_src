@@ -111,12 +111,6 @@
         <label for="overdraft">Overdraft</label>
         <input type="number" name="overdraft" id="overdraft" value="{{ user.get('overdraft', 0) }}" placeholder="Enter overdraft limit" step="1">
 
-        <label for="role">Role</label>
-        <select name="role" id="role">
-            <option value="user" {% if user.get('kind') == 'user' %}selected{% endif %}>User</option>
-            <option value="admin" {% if user.get('kind') == 'admin' %}selected{% endif %}>Admin</option>
-        </select>
-
         <button type="submit">Save Changes</button>
     </form>
 
