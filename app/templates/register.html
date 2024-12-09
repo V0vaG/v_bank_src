@@ -5,70 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
     <style>
+        /* General styles */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f4f8;
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
             padding: 20px;
+            margin: 0;
         }
 
         h1 {
             text-align: center;
+            font-size: 2rem;
+            color: #4CAF50;
+            margin-bottom: 20px;
         }
 
+        /* Form container */
         form {
             max-width: 500px;
             margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            padding: 30px 40px;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         }
 
         label {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 5px;
             display: block;
-            margin: 10px 0 5px;
         }
 
-        input, select, button {
+        input, select {
             width: 100%;
-            padding: 10px;
-            margin: 5px 0 20px;
+            padding: 12px;
+            margin: 8px 0 20px;
             border: 1px solid #ccc;
             border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
         }
 
+        input:focus, select:focus {
+            border-color: #4CAF50;
+            outline: none;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+        }
+
+        /* Buttons */
         button {
+            width: 100%;
+            padding: 12px;
             background-color: #4CAF50;
-            color: white;
+            color: #fff;
             border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
             cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
 
         button:hover {
             background-color: #45a049;
+            transform: translateY(-2px);
         }
 
-        .user-fields {
-            display: none;
+        button:active {
+            background-color: #3e8e41;
+            transform: translateY(0);
         }
 
         .actions {
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
 
         .actions a {
             text-decoration: none;
             color: #4CAF50;
-            padding: 10px;
-            border: 1px solid #4CAF50;
+            font-weight: bold;
+            border: 2px solid #4CAF50;
+            padding: 10px 15px;
             border-radius: 5px;
-            transition: background-color 0.3s, color 0.3s;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .actions a:hover {
             background-color: #4CAF50;
-            color: white;
+            color: #fff;
+        }
+
+        /* User fields toggle */
+        .user-fields {
+            display: none;
         }
     </style>
 </head>
@@ -77,11 +110,11 @@
     <form action="{{ url_for('register') }}" method="POST">
         <div>
             <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
+            <input type="text" id="username" name="username" placeholder="Enter your username" required>
         </div>
         <div>
             <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
         </div>
 
         <!-- Role dropdown -->
@@ -106,24 +139,25 @@
         <!-- Additional fields for users -->
         <div id="user-fields" class="user-fields">
             <label for="name">Name:</label>
-            <input type="text" name="name" id="name">
+            <input type="text" name="name" id="name" placeholder="Enter your name">
 
             <label for="birthday">Birthday:</label>
             <input type="date" name="birthday" id="birthday">
 
             <label for="balance">Balance:</label>
-            <input type="number" name="balance" id="balance" value="0">
+            <input type="number" name="balance" id="balance" placeholder="0">
 
             <label for="sellery">Sellery:</label>
-            <input type="number" name="sellery" id="sellery" value="0">
+            <input type="number" name="sellery" id="sellery" placeholder="0">
 
             <label for="interest">Interest:</label>
-            <input type="number" name="interest" id="interest" value="0">
+            <input type="number" name="interest" id="interest" placeholder="0">
 
             <label for="overdraft">Overdraft:</label>
-            <input type="number" name="overdraft" id="overdraft" value="0">
+            <input type="number" name="overdraft" id="overdraft" placeholder="0">
         </div>
 
+        <!-- Actions -->
         <div class="actions">
             <button type="submit">Register</button>
             <a href="{{ back_url }}">Cancel</a>
