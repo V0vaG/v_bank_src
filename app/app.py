@@ -138,7 +138,6 @@ def register():
         first_admin=first_admin
     )
 
-
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form.get('username')
@@ -171,16 +170,6 @@ def login():
 
 @app.route('/')
 def show_login():
-    # Check if users exist
-    if os.path.exists(USERS_FILE):
-        with open(USERS_FILE, 'r') as f:
-            users = json.load(f)
-    else:
-        users = []
-
-    # Check if there are no users
-    no_users_exist = len(users) == 0
-
     # Check if admins exist
     if os.path.exists(ADMINS_FILE):
         with open(ADMINS_FILE, 'r') as f:
@@ -188,11 +177,10 @@ def show_login():
     else:
         admins = []
 
-    # No admins exist if the list is empty
-    no_admins_exist = len(admins) == 0
+    # Check if root user exists
+    root_user_exists = any(admin.get('kind') == 'root' for admin in admins)
 
     # Load the external registration setting
-    config_file = os.path.join(DATA_DIR, 'config.json')
     if os.path.exists(config_file):
         with open(config_file, 'r') as f:
             config = json.load(f)
@@ -203,11 +191,9 @@ def show_login():
 
     return render_template(
         'login.html',
-        no_users_exist=no_users_exist,
-        no_admins_exist=no_admins_exist,
+        root_user_exists=root_user_exists,
         allow_registration=allow_registration
     )
-
 
 @app.route('/logout')
 def logout():
@@ -237,9 +223,6 @@ def root_area():
         return redirect(url_for('admin_area'))
 
     return render_template('root_area.html', username=username)
-
-
-
 
 @app.route('/index', methods=['GET', 'POST'])
 @login_required
@@ -294,7 +277,6 @@ def home():
         current_year=datetime.now().year
     )
 
-
 @app.route('/admin', methods=['GET', 'POST'])
 @login_required
 def admin_area():
@@ -320,7 +302,6 @@ def admin_area():
         version=version,
         host=host
     )
-
 
 @app.route('/edit_user/<username>', methods=['GET', 'POST'])
 @login_required
@@ -381,8 +362,6 @@ def edit_user(username):
 
     return render_template('edit_user.html', user=user)
 
-
-
 @app.route('/delete_user/<username>', methods=['POST'])
 @login_required
 def delete_user(username):
@@ -426,8 +405,6 @@ def delete_user(username):
     flash(f"User '{username}' has been deleted.", "success")
     return redirect(url_for('admin_area'))
 
-
-
 @app.route('/adjust_balance/<username>', methods=['POST'])
 @login_required
 def adjust_balance(username):
@@ -463,7 +440,6 @@ def adjust_balance(username):
         flash("Invalid amount entered. Please enter a valid number.", "danger")
 
     return redirect(url_for('admin_area'))
-
 
 @app.route('/toggle_registration', methods=['POST'])
 @login_required

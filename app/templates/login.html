@@ -189,15 +189,11 @@
         </form>
         
         <div class="create-account">
-            {% if no_admins_exist %}
-                <a href="{{ url_for('register') }}">Create Admin Account</a>
+            {% if not root_user_exists %}
+                <a href="{{ url_for('register') }}" class="button">Register Root User</a>
             {% endif %}
         </div>
-        <div class="create-account">
-            {% if allow_registration %}
-                <a href="{{ url_for('register') }}">Register New User</a>
-            {% endif %}
-        </div>
+        
         
     </div>
 
