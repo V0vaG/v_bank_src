@@ -26,14 +26,33 @@ ADMINS_FILE = os.path.join(DATA_DIR, 'admins.json')
 # Ensure the directory exists
 os.makedirs(DATA_DIR, exist_ok=True)
 
+config_file = os.path.join(DATA_DIR, 'config.json')
+if not os.path.exists(config_file):
+    config = {"root_created": False, "allow_registration": True}
+    with open(config_file, 'w') as f:
+        json.dump(config, f, indent=4)
+else:
+    with open(config_file, 'r') as f:
+        config = json.load(f)
+
 # Ensure both files exist
 for file in [USERS_FILE, ADMINS_FILE]:
     if not os.path.exists(file):
         with open(file, 'w') as f:
             json.dump([], f)
 
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    # Check if this is the first admin being created
+    if os.path.exists(ADMINS_FILE):
+        with open(ADMINS_FILE, 'r') as f:
+            admins = json.load(f)
+    else:
+        admins = []
+
+    first_admin = len(admins) == 0
+
     if request.method == 'POST':
         # Determine if the new account is a user or an admin
         role = request.form.get('role', 'user')
@@ -59,7 +78,18 @@ def register():
         parent = session.get('active_user') if session.get('active_role') == 'admin' else None
 
         # Create a new user object
-        new_user = {'username': username, 'password': hashed_password, 'kind': role}
+        new_user = {
+            'username': username,
+            'password': hashed_password,
+            'kind': 'root' if first_admin else role,  # Set kind to 'root' for the first admin
+            'is_root': first_admin  # Add a flag for the root user
+        }
+
+        # Flash appropriate message for root admin
+        if first_admin:
+            flash("Root admin created successfully!", "success")
+        else:
+            flash(f"User created successfully as {role}!", "success")
 
         # Add the parent field if the role is 'user' and an admin is creating the user
         if role == 'user' and parent:
@@ -89,21 +119,17 @@ def register():
         with open(users_file, 'w') as f:
             json.dump(users, f, indent=4)
 
-        flash(f"User created successfully as {role}!", "success")
+        # Update the root_created flag in the config file if this is the first admin
+        if first_admin:
+            config['root_created'] = True
+            with open(config_file, 'w') as f:
+                json.dump(config, f, indent=4)
+
         return redirect(url_for('show_login'))
 
     # If GET, show the registration form
     show_role_selection = 'admin_area' in request.args
     back_url = url_for('admin_area') if 'admin_area' in request.args else url_for('show_login')
-
-    # Check if this is the first admin being created
-    if os.path.exists(ADMINS_FILE):
-        with open(ADMINS_FILE, 'r') as f:
-            admins = json.load(f)
-    else:
-        admins = []
-
-    first_admin = len(admins) == 0
 
     return render_template(
         'register.html',
@@ -131,9 +157,14 @@ def login():
     # Validate user and password
     if user and check_password_hash(user['password'], password):
         session['active_user'] = username
-        session['active_role'] = user['kind']  # Store the role (admin or user)
-        flash("Login successful!", "success")
-        return redirect(url_for('home'))
+        session['active_role'] = user['kind']  # Store the role ('root', 'admin', or 'user')
+
+        if user['kind'] == 'root':
+            flash("Root admin login successful!", "success")
+            return redirect(url_for('root_area'))
+        else:
+            flash("Login successful!", "success")
+            return redirect(url_for('home'))
 
     flash("Invalid username or password.", "danger")
     return redirect(url_for('show_login'))
@@ -193,6 +224,22 @@ def login_required(f):
             return redirect(url_for('show_login'))
         return f(*args, **kwargs)
     return wrap
+
+@app.route('/root_area', methods=['GET'])
+@login_required
+def root_area():
+    username = session.get('active_user')
+    role = session.get('active_role')
+
+    # Ensure only root users can access
+    if role != 'root':
+        flash("Access denied. Root-only area.", "danger")
+        return redirect(url_for('admin_area'))
+
+    return render_template('root_area.html', username=username)
+
+
+
 
 @app.route('/index', methods=['GET', 'POST'])
 @login_required
@@ -296,6 +343,11 @@ def edit_user(username):
         flash(f"User '{username}' not found.", "danger")
         return redirect(url_for('admin_area'))
 
+    # Protect the root user from edits other than by themselves
+    if user.get('is_root', False) and username != active_username:
+        flash("The root user's data can only be edited by themselves.", "danger")
+        return redirect(url_for('admin_area'))
+
     if request.method == 'POST':
         try:
             # Update user details
@@ -356,6 +408,14 @@ def delete_user(username):
         flash("You cannot delete yourself as an admin.", "danger")
         return redirect(url_for('admin_area'))
 
+    # Find the user to be deleted
+    user = next((u for u in users if u['username'] == username), None)
+
+    # Protect the root user from deletion
+    if user and user.get('is_root', False):
+        flash("The root user cannot be deleted.", "danger")
+        return redirect(url_for('admin_area'))
+
     # Filter out the user to be deleted
     updated_users = [user for user in users if user['username'] != username]
 
@@ -365,6 +425,7 @@ def delete_user(username):
 
     flash(f"User '{username}' has been deleted.", "success")
     return redirect(url_for('admin_area'))
+
 
 
 @app.route('/adjust_balance/<username>', methods=['POST'])
